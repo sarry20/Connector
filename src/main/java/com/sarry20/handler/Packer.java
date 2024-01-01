@@ -17,7 +17,6 @@ public class Packer extends MessageToMessageDecoder<Packet<?>> {
     public Packer(AttributeKey<? extends BundlerInfo> p_300638_) {
         this.bundlerAttributeKey = p_300638_;
     }
-
     protected void decode(ChannelHandlerContext p_265208_, Packet<?> p_265182_, List<Object> p_265368_) throws Exception {
         BundlerInfo bundlerinfo$provider = p_265208_.channel().attr(this.bundlerAttributeKey).get();
         if (bundlerinfo$provider == null) {
@@ -44,7 +43,6 @@ public class Packer extends MessageToMessageDecoder<Packet<?>> {
                     p_265368_.add(p_265182_);
                 }
             }
-
         }
     }
 }

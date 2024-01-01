@@ -7,6 +7,7 @@ import io.netty.handler.codec.EncoderException;
 import io.netty.handler.codec.MessageToByteEncoder;
 
 public class Prepender extends MessageToByteEncoder<ByteBuf> {
+public static final int MAX_VARINT21_BYTES = 3;
     public int getVarIntSize(int len) {
         for (int i = 1; i < 5; i++) {
             if ((len & -1 << i * 7) == 0)
@@ -14,23 +15,15 @@ public class Prepender extends MessageToByteEncoder<ByteBuf> {
         }
         return 5;
     }
-
-    @Override
-    protected void encode(ChannelHandlerContext ctx, ByteBuf msg, ByteBuf out) throws Exception {
-        //Prefix the packet with its length
-        //Structure:
-        /*
-         * Length = VarInt
-         * ID = VarInt
-         * Data = Bytes
-         */
-        int length = msg.readableBytes();
-        int varIntSize = getVarIntSize(length);
-        if (varIntSize > 3) {
-            throw new IllegalStateException("Something went wrong in the Packet Formatter!");
+protected void encode(ChannelHandlerContext p_130571_, ByteBuf msg, ByteBuf out) {
+        int i = msg.readableBytes();
+        int j = getVarIntSize(i);
+        if (j > 3) {
+        throw new EncoderException("unable to fit " + i + " into 3");
+        } else {
+        out.ensureWritable(j + i);
+        ByteBufHelper.writeVarInt(out, i);
+        out.writeBytes(msg, msg.readerIndex(), i);
         }
-        out.ensureWritable(varIntSize + length);
-        ByteBufHelper.writeVarInt(out, length);
-        out.writeBytes(msg, msg.readerIndex(), length);
-    }
+        }
 }

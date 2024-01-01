@@ -88,8 +88,8 @@ public class Main {
                     .addLast(PacketEvents.DECODER_NAME,decoder)
                     .addLast("prepender", new Prepender())
                     .addLast(PacketEvents.ENCODER_NAME,enconder)
-                    .addLast("bundler", new Packer((AttributeKey<? extends BundlerInfo>) clientKey))
                     .addLast("unbundler", new Unpacker((AttributeKey<? extends BundlerInfo>) serverKey))
+                    .addLast("bundler", new Packer((AttributeKey<? extends BundlerInfo>) clientKey))
                     ;
                 }
             });

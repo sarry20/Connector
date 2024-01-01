@@ -15,17 +15,17 @@ public class Decoder extends MessageToMessageDecoder<ByteBuf> {
         this.user = user;
     }
     @Override
-    protected void decode(ChannelHandlerContext ctx, ByteBuf msg, List<Object> out) throws Exception {
-        if (msg.isReadable()) {
+    protected void decode(ChannelHandlerContext ctx, ByteBuf byteBuf, List<Object> out) throws Exception {
+        if (byteBuf.isReadable()) {
             ByteBuf outputBuffer = ctx.alloc().buffer().writeBytes(byteBuf);
             try {
                 PacketSendEvent sendEvent = PacketEventsImplHelper.handleClientBoundPacket(ctx.channel(), user, null, outputBuffer, true);
                 if (outputBuffer.isReadable())
                     out.add(outputBuffer.retain());
-                }
+
             }
             finally {
-                outputBuffer.release();        
+                outputBuffer.release();
             }
         }
     }

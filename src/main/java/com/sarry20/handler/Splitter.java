@@ -10,31 +10,42 @@ import io.netty.handler.codec.CorruptedFrameException;
 import java.util.List;
 
 public class Splitter extends ByteToMessageDecoder {
-    @Override
-    public void decode(ChannelHandlerContext ctx, ByteBuf byteBuf, List<Object> out) {
-        byteBuf.markReaderIndex();
-        byte[] bytes = new byte[3];
-        for (int i = 0; i < bytes.length; i++) {
-            if (!byteBuf.isReadable()) {
-                byteBuf.resetReaderIndex();
-                return;
+    private static final int MAX_VARINT21_BYTES = 3;
+    private final ByteBuf helperBuf = Unpooled.directBuffer(3);
+    protected void handlerRemoved0(ChannelHandlerContext p_299287_) {
+        this.helperBuf.release();
+    }
+
+    private static boolean copyVarint(ByteBuf p_299967_, ByteBuf p_298224_) {
+        for(int i = 0; i < 3; ++i) {
+            if (!p_299967_.isReadable()) {
+                return false;
             }
-            bytes[i] = byteBuf.readByte();
-            if (bytes[i] >= 0) {
-                ByteBuf newBB = Unpooled.wrappedBuffer(bytes);
-                try {
-                    int len = ByteBufHelper.readVarInt(newBB);
-                    if (byteBuf.readableBytes() < len) {
-                        byteBuf.resetReaderIndex();
-                        return;
-                    }
-                    out.add(byteBuf.readBytes(len));
-                    return;
-                } finally {
-                    newBB.release();
-                }
+
+            byte b0 = p_299967_.readByte();
+            p_298224_.writeByte(b0);
+            if (!hasContinuationBit(b0)) {
+                return true;
             }
         }
-        throw new CorruptedFrameException("Something went wrong in the packet splitter!");
+        throw new CorruptedFrameException("length wider than 21-bit");
+    }
+    protected void decode(ChannelHandlerContext channel, ByteBuf msg, List<Object> p_130568_) {
+        msg.markReaderIndex();
+        this.helperBuf.clear();
+        if (!copyVarint(msg, this.helperBuf)) {
+            msg.resetReaderIndex();
+        } else {
+            int i = ByteBufHelper.readVarInt(this.helperBuf);
+            if (msg.readableBytes() < i) {
+                msg.resetReaderIndex();
+            } else {
+
+                p_130568_.add(msg.readBytes(i));
+            }
+        }
+    }
+    public static boolean hasContinuationBit(byte p_299197_) {
+        return (p_299197_ & 128) == 128;
     }
 }
