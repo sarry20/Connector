@@ -16,13 +16,13 @@ public class Decoder extends MessageToMessageDecoder<ByteBuf> {
     }
     @Override
     protected void decode(ChannelHandlerContext ctx, ByteBuf msg, List<Object> out) throws Exception {
-        if (msg.isReadable()) {
+        PacketSendEvent sendEvent = PacketEventsImplHelper.handleClientBoundPacket(ctx.channel(), user, null, msg, true);
+        if (msg.isReadable())
             out.add(msg.retain());
-            PacketSendEvent sendEvent = PacketEventsImplHelper.handleClientBoundPacket(ctx.channel(), user, null, out, true);
-            if (sendEvent.hasPostTasks()) {
-//                queuedPostTasks.addAll(sendEvent.getPostTasks());
-            }
+        if (sendEvent.hasPostTasks()) {
+//            queuedPostTasks.addAll(sendEvent.getPostTasks());
         }
+
     }
 
     @Override
