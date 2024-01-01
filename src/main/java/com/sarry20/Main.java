@@ -11,10 +11,7 @@ import com.github.retrooper.packetevents.wrapper.handshaking.client.WrapperHands
 import com.github.retrooper.packetevents.wrapper.login.client.WrapperLoginClientLoginStart;
 import com.github.retrooper.packetevents.wrapper.login.client.WrapperLoginClientLoginSuccessAck;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientKeepAlive;
-import com.sarry20.handler.Packer;
-import com.sarry20.handler.Prepender;
-import com.sarry20.handler.Splitter;
-import com.sarry20.handler.Unpacker;
+import com.sarry20.handler.*;
 import com.sarry20.impl.Injector;
 import com.sarry20.impl.ProtocolImpl;
 import com.sarry20.impl.ServerImpl;
@@ -37,6 +34,7 @@ import java.util.*;
 public class Main {
     private static PacketEventsAPI<?> PACKET_EVENTS_API;
     private static final String NAME = "sarry20";
+    private static User USER;
 
     public static void main(String[] args) {
         PacketEvents.setAPI(NettyPacketEventsBuilder.build(new BuildData("Connector"),
@@ -59,25 +57,19 @@ public class Main {
         generatePlayer();
 
     }
-    private static int getNumber(int length){
-        Random r = new Random();
-        return r.nextInt(length);
-    }
-
     private static void generatePlayer(){
-        //String name = NAMES.get(getNumber(NAMES.size()))
-        User user = new User(getChannel(),ConnectionState.LOGIN,null, new UserProfile(UUID.nameUUIDFromBytes(NAME.getBytes()),NAME));
-        WrapperHandshakingClientHandshake handshake = new WrapperHandshakingClientHandshake(762,"localhost",25565, ConnectionState.LOGIN);
-        WrapperLoginClientLoginStart start = new WrapperLoginClientLoginStart(ClientVersion.V_1_19_4,user.getName(),null, user.getUUID());
+        getChannel();
 
-        PACKET_EVENTS_API.getProtocolManager().sendPacket(user.getChannel(),handshake);
-        PACKET_EVENTS_API.getProtocolManager().sendPacket(user.getChannel(),start);
+        WrapperHandshakingClientHandshake handshake = new WrapperHandshakingClientHandshake(762,"localhost",25565, ConnectionState.LOGIN);
+        WrapperLoginClientLoginStart start = new WrapperLoginClientLoginStart(ClientVersion.V_1_19_4,USER.getName(),null, USER.getUUID());
+
+        PACKET_EVENTS_API.getProtocolManager().sendPacket(USER.getChannel(),handshake);
+        PACKET_EVENTS_API.getProtocolManager().sendPacket(USER.getChannel(),start);
     }
 
-    private static Channel getChannel() {
+    private static void getChannel() {
         EventLoopGroup workerGroup = new NioEventLoopGroup();
         try {
-            final Channel[] c = new Channel[1];
             Bootstrap b = new Bootstrap();
             b.group(workerGroup);
             b.channel(NioSocketChannel.class);
@@ -85,21 +77,25 @@ public class Main {
             b.handler(new ChannelInitializer<SocketChannel>() {
                 @Override
                 public void initChannel(SocketChannel ch) {
+                    User user = new User(ch,ConnectionState.HANDSHAKING, null, new UserProfile(UUID.nameUUIDFromBytes(NAME.getBytes()),NAME));
+                    USER = user;
+                    Decoder decoder = new Decoder(user);
+                    Enconder enconder = new Enconder(user);
                     AttributeKey<?> clientKey = AttributeKey.valueOf("clientbound_protocol");
                     AttributeKey<?> serverKey = AttributeKey.valueOf("serverbound_protocol");
-                    ch.pipeline().addLast("splitter", new Splitter())
+                    ch.pipeline()
+                    .addLast("splitter", new Splitter())
+                    .addLast(PacketEvents.DECODER_NAME,decoder)
                     .addLast("prepender", new Prepender())
+                    .addLast(PacketEvents.ENCODER_NAME,enconder)
                     .addLast("bundler", new Packer((AttributeKey<? extends BundlerInfo>) clientKey))
                     .addLast("unbundler", new Unpacker((AttributeKey<? extends BundlerInfo>) serverKey))
                     ;
-                    c[0] = ch;
                 }
             });
             b.connect("localhost",25565).sync();
-            return c[0];
         }catch (Exception e){
 
         }
-    return null;
     }
 }
