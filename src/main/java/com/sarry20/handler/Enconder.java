@@ -15,16 +15,8 @@ public class Enconder extends MessageToByteEncoder<ByteBuf> {
     @Override
     protected void encode(ChannelHandlerContext ctx, ByteBuf byteBuf, ByteBuf out) throws Exception {
         if (byteBuf.isReadable()) {
-            ByteBuf outputBuffer = ctx.alloc().buffer().writeBytes(byteBuf);
-            try {
-                PacketEventsImplHelper.handleServerBoundPacket(ctx.channel(), user, null, outputBuffer, true);
-                if (outputBuffer.isReadable()) {
-                    out.writeBytes(outputBuffer.retain());
-                }
-            }
-            finally {
-                outputBuffer.release();
-            }
+            out.writeBytes(msg);
+            PacketEventsImplHelper.handleServerBoundPacket(ctx.channel(), user, null, out, true);
         }
     }
     @Override
