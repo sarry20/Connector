@@ -60,11 +60,11 @@ public class Main {
     private static void generatePlayer(){
         getChannel();
 
-        USER.setConnectionState(ConnectionState.LOGIN);
-        WrapperHandshakingClientHandshake handshake = new WrapperHandshakingClientHandshake(762,"localhost",25565, USER.getConnectionState());
+        WrapperHandshakingClientHandshake handshake = new WrapperHandshakingClientHandshake(762,"localhost",25565, ConnectionState.LOGIN);
         WrapperLoginClientLoginStart start = new WrapperLoginClientLoginStart(ClientVersion.V_1_19_4,USER.getName(),null, USER.getUUID());
-        PACKET_EVENTS_API.getProtocolManager().sendPacket(USER.getChannel(),handshake);
-        PACKET_EVENTS_API.getProtocolManager().sendPacket(USER.getChannel(),start);
+        PACKET_EVENTS_API.getProtocolManager().sendPacket(USER.getChannel(), handshake);
+        USER.setConnectionState(ConnectionState.LOGIN);
+        PACKET_EVENTS_API.getProtocolManager().sendPacket(USER.getChannel(), start);
     }
 
     private static void getChannel() {
