@@ -2,22 +2,33 @@ package com.sarry20;
 
 import com.github.retrooper.packetevents.event.PacketListener;
 import com.github.retrooper.packetevents.event.PacketSendEvent;
+import com.github.retrooper.packetevents.protocol.ConnectionState;
 import com.github.retrooper.packetevents.protocol.packettype.PacketType;
+import com.github.retrooper.packetevents.protocol.player.HumanoidArm;
 import com.github.retrooper.packetevents.wrapper.login.client.WrapperLoginClientLoginSuccessAck;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientKeepAlive;
+import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientSettings;
+import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientTeleportConfirm;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerKeepAlive;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPlayerPositionAndLook;
 
 public class Sender implements PacketListener {
     @Override
     public void onPacketSend(PacketSendEvent event) {
         System.out.println("PACKET EVENT: "+event.getPacketName());
         if (event.getPacketType() == PacketType.Play.Client.KEEP_ALIVE){
+            System.out.println("SENDING KEEP ALIVEEEEE!!!");
             WrapperPlayServerKeepAlive keepAlive = new WrapperPlayServerKeepAlive(event);
             WrapperPlayClientKeepAlive alive = new WrapperPlayClientKeepAlive(keepAlive.getId());
             event.getUser().sendPacket(alive);
-        }else if(event.getPacketType() == PacketType.Login.Server.LOGIN_SUCCESS){
-            WrapperLoginClientLoginSuccessAck ack = new WrapperLoginClientLoginSuccessAck();
-            event.getUser().sendPacket(ack);
+        } else if(event.getPacketType() == PacketType.Login.Server.LOGIN_SUCCESS){
+            WrapperPlayClientSettings clientSettings = new WrapperPlayClientSettings("en_GB", 8, WrapperPlayClientSettings.ChatVisibility.FULL,true, (byte) 0x85, HumanoidArm.LEFT, false,true);
+            event.getUser().setConnectionState(ConnectionState.PLAY);
+            event.getUser().sendPacket(clientSettings);
+        } else if(event.getPacketType() == PacketType.Play.Server.PLAYER_POSITION_AND_LOOK){
+            WrapperPlayServerPlayerPositionAndLook p = new WrapperPlayServerPlayerPositionAndLook(event);
+            WrapperPlayClientTeleportConfirm tp = new WrapperPlayClientTeleportConfirm(p.getTeleportId());
+            event.getUser().sendPacket(tp);
         }
     }
 //    @Override
