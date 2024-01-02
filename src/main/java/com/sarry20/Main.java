@@ -33,7 +33,7 @@ import java.util.*;
 
 public class Main {
     private static PacketEventsAPI<?> PACKET_EVENTS_API;
-    private static final String NAME = "sarry20";
+    private static String NAME = "sarry20";
     private static User USER;
 
     public static void main(String[] args) {
@@ -49,18 +49,21 @@ public class Main {
                 return ((User) player).getChannel();
             }
         }));
+        if(args.length >0 )
+            NAME = args[0];
         PACKET_EVENTS_API = PacketEvents
                 .getAPI();
         PACKET_EVENTS_API.getEventManager().registerListener(new Sender(), PacketListenerPriority.HIGH);
         PACKET_EVENTS_API.getSettings().bStats(false).checkForUpdates(false);
         PACKET_EVENTS_API.init();
+
         generatePlayer();
 
     }
     private static void generatePlayer(){
         getChannel();
 
-        WrapperHandshakingClientHandshake handshake = new WrapperHandshakingClientHandshake(762,"localhost",25565, ConnectionState.LOGIN);
+        WrapperHandshakingClientHandshake handshake = new WrapperHandshakingClientHandshake(762,"localhost",25577, ConnectionState.LOGIN);
         WrapperLoginClientLoginStart start = new WrapperLoginClientLoginStart(ClientVersion.V_1_19_4,USER.getName(),null, USER.getUUID());
         PACKET_EVENTS_API.getProtocolManager().sendPacket(USER.getChannel(), handshake);
         USER.setConnectionState(ConnectionState.LOGIN);
@@ -79,7 +82,6 @@ public class Main {
                 public void initChannel(SocketChannel ch) {
                     User user = new User(ch,ConnectionState.HANDSHAKING, null, new UserProfile(UUID.nameUUIDFromBytes(NAME.getBytes()),NAME));
                     USER = user;
-                    System.out.println(user);
                     Decoder decoder = new Decoder(user);
                     Enconder enconder = new Enconder(user);
                     AttributeKey<?> clientKey = AttributeKey.valueOf("clientbound_protocol");
@@ -94,9 +96,26 @@ public class Main {
                     ;
                 }
             });
-            b.connect("localhost",25565).sync();
+            b.connect("localhost",25577).sync();
         }catch (Exception e){
 
         }
+    }
+    public static void setupCompression(int p_129485_) {
+        if (p_129485_ >= 0) {
+            Channel channel = (Channel) USER.getChannel();
+            if (channel.pipeline().get("decompress") instanceof CompressionDecoder) {
+                ((CompressionDecoder)channel.pipeline().get("decompress")).setThreshold(p_129485_, false);
+            } else {
+                channel.pipeline().addBefore(PacketEvents.DECODER_NAME, "decompress", new CompressionDecoder(p_129485_, false));
+            }
+
+            if (channel.pipeline().get("compress") instanceof CompressionEncoder) {
+                ((CompressionEncoder)channel.pipeline().get("compress")).setThreshold(p_129485_);
+            } else {
+                channel.pipeline().addBefore(PacketEvents.ENCODER_NAME, "compress", new CompressionEncoder(p_129485_));
+            }
+        }
+
     }
 }
