@@ -2,15 +2,19 @@ package com.sarry20;
 
 import com.github.retrooper.packetevents.event.PacketListener;
 import com.github.retrooper.packetevents.event.PacketReceiveEvent;
+import com.github.retrooper.packetevents.event.PacketSendEvent;
 import com.github.retrooper.packetevents.netty.buffer.ByteBufHelper;
+import com.github.retrooper.packetevents.protocol.packettype.PacketType;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientKeepAlive;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerKeepAlive;
 
 public class Sender implements PacketListener {
     @Override
-    public void onPacketReceive(PacketReceiveEvent event) {
+    public void onPacketSend(PacketSendEvent event) {
         System.out.println(event);
-        if (event.getPacketId() == 12){
-            WrapperPlayClientKeepAlive alive = new WrapperPlayClientKeepAlive(ByteBufHelper.readLong(event.getByteBuf()));
+        if (event.getPacketType() == PacketType.Play.Client.KEEP_ALIVE){
+            WrapperPlayServerKeepAlive keepAlive = new WrapperPlayServerKeepAlive(event);
+            WrapperPlayClientKeepAlive alive = new WrapperPlayClientKeepAlive(keepAlive.getId());
             event.getUser().sendPacket(alive);
         }
     }

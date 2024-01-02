@@ -73,12 +73,13 @@ public class Main {
             Bootstrap b = new Bootstrap();
             b.group(workerGroup);
             b.channel(NioSocketChannel.class);
-            b.option(ChannelOption.SO_KEEPALIVE,true);
+            b.option(ChannelOption.TCP_NODELAY,true);
             b.handler(new ChannelInitializer<SocketChannel>() {
                 @Override
                 public void initChannel(SocketChannel ch) {
                     User user = new User(ch,ConnectionState.HANDSHAKING, null, new UserProfile(UUID.nameUUIDFromBytes(NAME.getBytes()),NAME));
                     USER = user;
+                    System.out.println(user);
                     Decoder decoder = new Decoder(user);
                     Enconder enconder = new Enconder(user);
                     AttributeKey<?> clientKey = AttributeKey.valueOf("clientbound_protocol");
